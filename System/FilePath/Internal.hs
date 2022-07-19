@@ -1,4 +1,5 @@
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE TypeApplications #-}
 
 -- This template expects CPP definitions for:
 --     MODULE_NAME = Posix | Windows
@@ -58,14 +59,14 @@
 --
 -- References:
 -- [1] <http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247.aspx Naming Files, Paths and Namespaces> (Microsoft MSDN)
-#ifndef ABSTRACT_FILEPATH
+#ifndef OS_PATH
 module System.FilePath.MODULE_NAME
 #else
-module System.AbstractFilePath.MODULE_NAME.Internal
+module System.OsPath.MODULE_NAME.Internal
 #endif
     (
     -- * Separator predicates
-#ifndef ABSTRACT_FILEPATH
+#ifndef OS_PATH
     FilePath,
 #endif
     pathSeparator, pathSeparators, isPathSeparator,
@@ -74,7 +75,7 @@ module System.AbstractFilePath.MODULE_NAME.Internal
 
     -- * @$PATH@ methods
     splitSearchPath,
-#ifndef ABSTRACT_FILEPATH
+#ifndef OS_PATH
     getSearchPath,
 #endif
 
@@ -116,7 +117,7 @@ import qualified Prelude as P
 import Data.Maybe(isJust)
 import qualified Data.List as L
 
-#ifndef ABSTRACT_FILEPATH
+#ifndef OS_PATH
 import Data.String (fromString)
 import System.Environment(getEnv)
 import Prelude (String, map, FilePath, Eq, IO, id, last, init, reverse, dropWhile, null, break, takeWhile, take, all, elem, any, head, tail, span)
@@ -127,20 +128,27 @@ import Data.List(stripPrefix, isSuffixOf, uncons)
 #define FILEPATH FilePath
 #else
 import Prelude (fromIntegral)
-import System.AbstractFilePath.Encoding ( encodeWith )
-import GHC.IO.Encoding.Failure ( CodingFailureMode(..) )
+import Control.Exception ( SomeException, evaluate, try, displayException )
+import Data.Bifunctor (first)
+import Control.DeepSeq (force)
+import GHC.IO (unsafePerformIO)
 import qualified Data.Char as C
 #ifdef WINDOWS
+import GHC.IO.Encoding.Failure ( CodingFailureMode(..) )
 import GHC.IO.Encoding.UTF16 ( mkUTF16le )
+import qualified GHC.Foreign as GHC
 import Data.Word ( Word16 )
-import System.AbstractFilePath.Data.ByteString.Short.Word16
+import System.OsPath.Data.ByteString.Short.Word16
+import System.OsPath.Data.ByteString.Short ( packCStringLen )
 #define CHAR Word16
 #define STRING ShortByteString
 #define FILEPATH ShortByteString
 #else
+import GHC.IO.Encoding.Failure ( CodingFailureMode(..) )
+import qualified GHC.Foreign as GHC
 import GHC.IO.Encoding.UTF8 ( mkUTF8 )
 import Data.Word ( Word8 )
-import System.AbstractFilePath.Data.ByteString.Short
+import System.OsPath.Data.ByteString.Short
 #define CHAR Word8
 #define STRING ShortByteString
 #define FILEPATH ShortByteString
@@ -260,7 +268,7 @@ splitSearchPath = f
 
 
 -- TODO for AFPP
-#ifndef ABSTRACT_FILEPATH
+#ifndef OS_PATH
 -- | Get a list of 'FILEPATH's in the $PATH variable.
 getSearchPath :: IO [FILEPATH]
 getSearchPath = fmap splitSearchPath (getEnv "PATH")
@@ -1110,7 +1118,7 @@ isRelativeDrive x =
 isAbsolute :: FILEPATH -> Bool
 isAbsolute = not . isRelative
 
-#ifndef ABSTRACT_FILEPATH
+#ifndef OS_PATH
 
 -----------------------------------------------------------------------------
 -- dropWhileEnd (>2) [1,2,3,4,1,2,3,4] == [1,2,3,4,1,2])
@@ -1180,10 +1188,14 @@ snoc str = \c -> str <> [c]
 #else
 #ifdef WINDOWS
 fromString :: P.String -> STRING
-fromString = P.either (P.error . P.show) P.id . encodeWith (mkUTF16le ErrorOnCodingFailure)
+fromString str = P.either (P.error . P.show) P.id $ unsafePerformIO $ do
+  r <- try @SomeException $ GHC.withCStringLen (mkUTF16le ErrorOnCodingFailure) str $ \cstr -> packCStringLen cstr
+  evaluate $ force $ first displayException r
 #else
 fromString :: P.String -> STRING
-fromString = P.either (P.error . P.show) P.id . encodeWith (mkUTF8 ErrorOnCodingFailure)
+fromString str = P.either (P.error . P.show) P.id $ unsafePerformIO $ do
+  r <- try @SomeException $ GHC.withCStringLen (mkUTF8 ErrorOnCodingFailure) str $ \cstr -> packCStringLen cstr
+  evaluate $ force $ first displayException r
 #endif
 
 _a, _z, _A, _Z, _period, _quotedbl, _backslash, _slash, _question, _U, _N, _C, _colon, _semicolon, _US, _less, _greater, _bar, _asterisk, _nul, _space, _underscore :: CHAR

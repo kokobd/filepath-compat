@@ -2,10 +2,12 @@
 
 _Note: below all `FilePath` values are unquoted, so `\\` really means two backslashes._
 
-## 2.0.0.0 ????
+## 1.4.100.0 *July 2022*
 
 Implementation of the [Abstract FilePath Proposal](https://gitlab.haskell.org/ghc/ghc/-/wikis/proposal/abstract-file-path)
 in user-space as a separate type.
+
+Introduction to the new API is explained [in this blog post](https://hasufell.github.io/posts/2022-06-29-fixing-haskell-filepaths.html).
 
 ## 1.4.2.2 *Dec 2021*
 

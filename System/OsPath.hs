@@ -1,13 +1,11 @@
 {-# LANGUAGE CPP #-}
 
-#define FILEPATH_NAME AbstractFilePath
+#define FILEPATH_NAME OsPath
 #define OSSTRING_NAME OsString
 #define WORD_NAME OsChar
-#define CTOR OsString
-#define WTOR OsChar
 
 -- |
--- Module      :  System.AbstractFilePath
+-- Module      :  System.OsPath
 -- Copyright   :  © 2021 Julian Ospald
 -- License     :  MIT
 --
@@ -27,20 +25,19 @@
 --
 -- - On /Windows/, filepaths are expected to be encoded as UTF16-LE <https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/76f10dd8-699d-45e6-a53c-5aefc586da20 as per the documentation>, but
 --   may also include invalid surrogate pairs, in which case UCS-2 can be used. They are passed as @wchar_t*@ to syscalls.
---   'AbstractFilePath' only maintains the wide character invariant.
+--   'OsPath' only maintains the wide character invariant.
 -- - On /Unix/, filepaths don't have a predefined encoding (although they
 --   are often interpreted as UTF8) as per the
 --   <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_170 POSIX specification>
---   and are passed as @char[]@ to syscalls. 'AbstractFilePath' maintains no invariant
---   here. Some functions however, such as 'toAbstractFilePathUtf', may expect
---   or produce UTF8.
+--   and are passed as @char[]@ to syscalls. 'OsPath' maintains no invariant
+--   here.
 --
 -- Apart from encoding, filepaths have additional restrictions per platform:
 --
 -- - On /Windows/ the <https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file#naming-conventions naming convention> may apply
 -- - On /Unix/, only @NUL@ bytes are disallowed as per the <https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_170 POSIX specification>
 --
--- Use 'isValid' to check for these restrictions ('AbstractFilePath' doesn't
+-- Use 'isValid' to check for these restrictions ('OsPath' doesn't
 -- maintain this invariant).
 --
 -- Also note that these restrictions are
@@ -52,19 +49,15 @@
 -- It is advised to follow these principles when dealing with filepaths\/filenames:
 --
 -- 1. Avoid interpreting filenames that the OS returns, unless absolutely necessary.
---    For example, the filepath separator is usually a predefined 'Word8', regardless of encoding.
+--    For example, the filepath separator is usually a predefined 'Word8'/'Word16', regardless of encoding.
 --    So even if we need to split filepaths, it might still not be necessary to understand the encoding
 --    of the filename.
 -- 2. When interpreting OS returned filenames consider that these might not be UTF8 on /unix/
---    or at worst don't have an ASCII compatible encoding. Some strategies here involve looking
---    up the current locale and using that for decoding ('fromAbstractFilePathFS' does this).
---    Otherwise it can be reasonable to assume UTF8 on unix ('fromAbstractFilePathUtf' does that) if your application specifically
---    mentions that it requires a UTF8 compatible system. These things should be documented.
--- 3. When dealing with user input (e.g. on the command line) on /unix/ as e.g. @String@ the input
---    encoding is lost. The output encoding (e.g. how we write a filename to disk) can then
---    either follow the current locale again ('toAbstractFilePathFS') or a fixed encoding
---    ('toAbstractFilePathUtf'/'toAbstractFilePathEnc'). The decision should be clearly documented. If the input is in the
---    form of a @ByteString@, then 'System.AbstractFilePath.Internal.bytesToAFP' may be of interest, unless the input needs further
---    interpretation.
+--    or at worst don't have an ASCII compatible encoding. The are 3 available strategies fer decoding/encoding:
+--    a) pick the best UTF (UTF-8 on unix, UTF-16LE on windows), b) decode with an explicitly defined 'TextEncoding',
+--    c) mimic the behavior of the @base@ library (permissive UTF16 on windows, current filesystem encoding on unix).
+-- 3. Avoid comparing @String@ based filepaths, because filenames of different encodings
+--    may have the same @String@ representation, although they're not the same byte-wise.
 
-#include "AbstractFilePath/Common.hs"
+
+#include "OsPath/Common.hs"
