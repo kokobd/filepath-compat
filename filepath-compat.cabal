@@ -71,7 +71,7 @@ source-repository head
   type:     git
   location: https://gitlab.haskell.org/haskell/filepath
 
-library
+library filepath-fork
   exposed-modules:
     System.FilePath
     System.FilePath.Posix
@@ -126,7 +126,7 @@ test-suite filepath-tests
   build-depends:
     , base
     , bytestring  >=0.11.3.0
-    , filepath
+    , filepath-fork
     , QuickCheck  >=2.7      && <2.15
 
   default-language: Haskell2010
@@ -147,7 +147,7 @@ test-suite filepath-equivalent-tests
   build-depends:
     , base
     , bytestring  >=0.11.3.0
-    , filepath
+    , filepath-fork
     , QuickCheck  >=2.7      && <2.15
 
 test-suite bytestring-tests
@@ -164,7 +164,7 @@ test-suite bytestring-tests
   build-depends:
     , base
     , bytestring  >=0.11.3.0
-    , filepath
+    , filepath-fork
     , QuickCheck  >=2.7      && <2.15
 
 test-suite abstract-filepath
@@ -184,7 +184,7 @@ test-suite abstract-filepath
     , bytestring  >=0.11.3.0
     , checkers    ^>=0.5.6
     , deepseq
-    , filepath
+    , filepath-fork
     , QuickCheck  >=2.7      && <2.15
 
 benchmark bench-filepath
@@ -198,10 +198,49 @@ benchmark bench-filepath
     , base
     , bytestring  >=0.11.3.0
     , deepseq
-    , filepath
+    , filepath-fork
 
   if impl(ghc >=8.10)
     ghc-options: "-with-rtsopts=-A32m --nonmoving-gc"
 
   else
     ghc-options: -with-rtsopts=-A32m
+
+flag upstream-filepath
+  default: True
+  manual: False
+  description: If true, uses the upstream 'filepath' package. Otherwise, use a forked 'filepath' baked into this package
+
+library
+  reexported-modules:
+    , System.FilePath
+    , System.FilePath.Posix
+    , System.FilePath.Windows
+    , System.OsPath
+    , System.OsPath.Data.ByteString.Short
+    , System.OsPath.Data.ByteString.Short.Internal
+    , System.OsPath.Data.ByteString.Short.Word16
+    , System.OsPath.Encoding
+    , System.OsPath.Encoding.Internal
+    , System.OsPath.Internal
+    , System.OsPath.Posix
+    , System.OsPath.Posix.Internal
+    , System.OsPath.Types
+    , System.OsPath.Windows
+    , System.OsPath.Windows.Internal
+    , System.OsString
+    , System.OsString.Internal
+    , System.OsString.Internal.Types
+    , System.OsString.Posix
+    , System.OsString.Windows
+  default-language: Haskell2010
+  hs-source-dirs:
+    src
+  build-depends:
+    base
+  if flag(upstream-filepath)
+    build-depends:
+      filepath >= 1.4.100.0
+  else
+    build-depends:
+      filepath-fork

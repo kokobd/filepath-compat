@@ -4,3 +4,4 @@ dist-newstyle/
 dist/
 ghc.mk
 .stack-work/
+cabal.project.local
