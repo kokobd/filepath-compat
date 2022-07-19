@@ -206,7 +206,7 @@ benchmark bench-filepath
   else
     ghc-options: -with-rtsopts=-A32m
 
-flag upstream-filepath
+flag upstream
   default: True
   manual: False
   description: If true, uses the upstream 'filepath' package. Otherwise, use a forked 'filepath' baked into this package
@@ -238,7 +238,7 @@ library
     src
   build-depends:
     base
-  if flag(upstream-filepath)
+  if flag(upstream)
     build-depends:
       filepath >= 1.4.100.0
   else
