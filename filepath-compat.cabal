@@ -5,16 +5,15 @@ version:            1.4.100.0
 -- NOTE: Don't forget to update ./changelog.md
 license:            BSD-3-Clause
 license-file:       LICENSE
-author:             Neil Mitchell <ndmitchell@gmail.com>
-maintainer:         Julian Ospald <hasufell@posteo.de>
-copyright:          Neil Mitchell 2005-2020, Julain Ospald 2021-2022
-bug-reports:        https://gitlab.haskell.org/haskell/filepath/-/issues
-homepage:
-  https://gitlab.haskell.org/haskell/filepath/-/blob/master/README.md
+author:             kokobd <contact@zelinf.net>
+maintainer:         kokobd <contact@zelinf.net>
+copyright:          Neil Mitchell 2005-2020, Julain Ospald 2021-2022, kokobd 2022
+bug-reports:        https://github.com/kokobd/filepath-compat
+homepage:           https://github.com/kokobd/filepath-compat
 
 category:           System
 build-type:         Simple
-synopsis:           Library for manipulating FilePaths in a cross platform way.
+synopsis:           A thin wrapper, making 'System.OsPath' avaiable on older versions of lib:ghc
 tested-with:
   GHC ==8.0.2
    || ==8.2.2
@@ -26,6 +25,11 @@ tested-with:
    || ==9.2.3
 
 description:
+  This package automatically reexports 'filepath' if 'System.OsPath' is available. Otherwise, it will use forked source
+  code of filepath. The code aligns with upstream, and is not modified in anyway. The only modification is in the cabal file.
+
+  Below are the original package description from upstream:
+
   This package provides functionality for manipulating @FilePath@ values, and is shipped with <https://www.haskell.org/ghc/ GHC>. It provides two variants for filepaths:
   .
   1. legacy filepaths: @type FilePath = String@
@@ -234,8 +238,6 @@ library
     , System.OsString.Posix
     , System.OsString.Windows
   default-language: Haskell2010
-  hs-source-dirs:
-    src
   build-depends:
     base
   if flag(upstream)
